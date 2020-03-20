@@ -7,18 +7,52 @@ import SEO from "../components/seo"
 import './index.css';
 import fetch from 'node-fetch';
 
+const RestrauntList = ({ restaurants, onClickHandler, favs }) => {
+  return (
+    restaurants ? <div className="restaurant-list">
+      {restaurants.map(({restaurant}) => (
+        <div className="restaurant-container" key={`restaurant${restaurant.id}`}>
+          <span className="user-rating">{restaurant.user_rating.aggregate_rating}</span>
+          <Link to={`/restaurant/?id=${restaurant.id}`}>
+            <img src={restaurant.thumb} />
+          </Link>
+          <p>
+            {restaurant.name}
+            <i 
+              onClick={() => onClickHandler(restaurant.id)} 
+              className={`fa fa-heart ${favs.indexOf(restaurant.id) > -1 ? 'selected' : ''}`}
+            ></i>
+          </p>
+        </div>
+      ))}
+    </div> : null
+  )
+}
+
 
 class IndexPage extends React.Component{
-  setLocationNameOnChange(evt){
+  constructor() {
+    super();
+
+    this.state = {
+      //restaurants: restaurantsData.restaurants,
+      restaurants: null,
+      location: '',
+      favs: []
+    };
+  }
+
+
+  setOnChange(evt){
     this.setState({
-      locationName: evt.target.value
+      location: evt.target.value
     });
 
   }
 
-  getLatLong(locationName){
+  getLocdata(location){
   
-    fetch(`https://us1.locationiq.com/v1/search.php?key=93413dd7e03322&q=${locationName}&format=json`,
+    fetch(`https://us1.locationiq.com/v1/search.php?key=1025bc1daf5454&q=${location}&format=json`,
     {
       method: 'GET',
       headers: {
@@ -44,7 +78,7 @@ class IndexPage extends React.Component{
      method: "GET",
      headers:{
       'accept': 'application/json',
-      'user-key': "402f8842a1e6605bdc5f03d9d9c202db"
+      'user-key': "1ad408702fb95fe8c982b8f28cc9484b"
      } 
     })
     .then(res => res.json())
@@ -64,8 +98,27 @@ class IndexPage extends React.Component{
   }
 
   handleOnClick(){
-    // console.log(this.state.locationName);
-    this.getLatLong(this.state.locationName);
+
+    this.getLocdata(this.state.location);
+  }
+
+  addToFavs(res_id) {
+    const resIndex = this.state.favs.indexOf(res_id);
+    let favs = [];
+
+    if (resIndex > -1) {
+      this.state.favs.splice(resIndex, 1);
+
+      favs = [...this.state.favs];
+
+      console.log(favs)
+    } else {
+      favs = [...this.state.favs, res_id]
+    }
+
+    this.setState({
+      favs: favs
+    });
   }
 
   render (){
@@ -79,11 +132,20 @@ class IndexPage extends React.Component{
         <Image />
       </div> */}
       <div className="location-search">
-            <input placeholder="Enter the location" onChange={(evt) => this.setLocationNameOnChange(evt)}/>
+            <input placeholder="Enter the location" onChange={(evt) => this.setOnChange(evt)}/>
             <button onClick={(evt) => this.handleOnClick(evt)}>Search</button>
           </div>
           <br></br>
           <br></br>
+          {/* {console.log(this.state)} */}
+      { this.state.restaurants
+          ? <RestrauntList onClickHandler={(id) => this.addToFavs(id)} restaurants={this.state.restaurants} favs={this.state.favs} />
+          : null
+        }
+        { this.state.loading && <div className="loading">
+            <img src="https://icon-library.net//images/gif-loading-icon/gif-loading-icon-17.jpg" />
+          </div>
+        }
       
           </Layout>
   )
